@@ -6,6 +6,7 @@ import (
 
 	"github.com/dewey4iv/dawdle"
 	"github.com/dewey4iv/timestamps"
+	uuid "github.com/satori/go.uuid"
 )
 
 // New takes a set of options and returns a store
@@ -92,6 +93,10 @@ func (store *TaskStore) byStatus(status dawdle.TaskStatus) ([]dawdle.Task, error
 
 // Save saves a task
 func (store *TaskStore) Save(t dawdle.Task) error {
+	if t.ID == "" {
+		t.ID = uuid.NewV4().String()
+	}
+
 	var exists bool
 
 	for i := range store.tasks {

@@ -77,7 +77,7 @@ func IsReady(t Task) bool {
 		return false
 	}
 
-	if time.Since(*t.RunAt) < 0 {
+	if t.RunAt != nil && time.Since(*t.RunAt) < 0 {
 		return false
 	}
 

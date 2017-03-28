@@ -3,7 +3,7 @@ package scheduler
 import "github.com/dewey4iv/dawdle"
 
 // New returns a new Scheduler
-func New(opts ...Option) (dawdle.Scheduler, error) {
+func New(opts ...Option) (*Scheduler, error) {
 	var s Scheduler
 
 	for _, opt := range opts {

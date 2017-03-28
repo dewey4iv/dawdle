@@ -1,6 +1,7 @@
 package processor
 
 import (
+	"log"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -14,7 +15,7 @@ func New(opts ...Option) (dawdle.Processor, error) {
 		internalDelay: time.Second,
 		taskCh:        make(chan dawdle.Task),
 		workerCh:      make(chan chan dawdle.Task),
-		workerCount:   10,
+		workerCount:   20,
 		quitCh:        make(chan struct{}),
 		exitCh:        make(chan struct{}),
 	}
@@ -58,6 +59,7 @@ func (p *Processor) setup() error {
 			case <-p.quitCh:
 				return
 			default:
+				// log.Printf("attempting to get a task")
 				task, err := p.store.Tasks().GetOne()
 				if err != nil {
 					if _, ok := err.(dawdle.ErrNoPendingTasks); ok {
@@ -71,6 +73,7 @@ func (p *Processor) setup() error {
 					continue
 				}
 
+				log.Printf("Task to be performed: %s", task.ID)
 				p.taskCh <- *task
 			}
 		}
@@ -81,10 +84,10 @@ func (p *Processor) setup() error {
 
 func (p *Processor) loop() {
 	for {
-		task := <-p.taskCh
+		worker := <-p.workerCh
 
 		select {
-		case worker := <-p.workerCh:
+		case task := <-p.taskCh:
 			worker <- task
 		case <-p.quitCh:
 			// wait for all workers to return
@@ -140,6 +143,7 @@ func (w *worker) loop() {
 
 // Invoke takes a store, registrar and task and invokes Perform
 func Invoke(store dawdle.Store, registrar dawdle.Registrar, task dawdle.Task) error {
+	// log.Printf("Invoking Task: %s \nArgs: %s", task.ID, string(task.Args))
 	in := dawdle.NewInvocation(task.ID)
 
 	// save regardless of the outcome
